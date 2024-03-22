@@ -1,0 +1,67 @@
+% Constants
+g = 9.81; % gravitational acceleration (m/s^2)
+
+% Aircraft Parameters
+mass = 1000; % kg
+Ix = 1000; % kg*m^2
+S = 20; % m^2
+c = 2; % m
+CL_alpha = 0.1; % lift coefficient slope (1/rad)
+CD_0 = 0.05; % zero-lift drag coefficient
+rho = 1.225; % air density (kg/m^3)
+V = 50; % true airspeed (m/s)
+
+% Control Gains
+Kp_theta = 1;
+
+% Initial Conditions
+u0 = V; % initial velocity (m/s)
+theta0 = 0; % initial pitch angle (rad)
+
+% Time Parameters
+dt = 0.01; % time step
+t_final = 20; % final simulation time
+
+% Simulation
+t = 0:dt:t_final;
+N = length(t);
+
+u = zeros(1, N);
+theta = zeros(1, N);
+
+u(1) = u0;
+theta(1) = theta0;
+
+for i = 2:N
+    % Compute aerodynamic forces and moments
+    alpha = theta(i-1); % angle of attack
+    Lift = 0.5 * rho * u(i-1)^2 * S * CL_alpha * alpha;
+    Drag = 0.5 * rho * u(i-1)^2 * S * CD_0;
+    
+    % Compute control input (elevator deflection)
+    delta_e = -Kp_theta * (theta(i-1) - theta0);
+    
+    % Compute accelerations
+    du_dt = (Lift * cos(alpha) - Drag) / mass - g * sin(theta(i-1));
+    dtheta_dt = u(i-1) * sin(alpha);
+    
+    % Update states using Euler integration
+    u(i) = u(i-1) + du_dt * dt;
+    theta(i) = theta(i-1) + dtheta_dt * dt;
+end
+
+% Plot Results
+figure;
+subplot(2, 1, 1);
+plot(t, u);
+xlabel('Time (s)');
+ylabel('Velocity (m/s)');
+title('Longitudinal Stability: Velocity vs. Time');
+
+subplot(2, 1, 2);
+plot(t, rad2deg(theta));
+xlabel('Time (s)');
+ylabel('Pitch Angle (degrees)');
+title('Longitudinal Stability: Pitch Angle vs. Time');
+
+
